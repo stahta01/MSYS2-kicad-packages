@@ -1,0 +1,131 @@
+# Maintainer: Tim Stahlhut <stahta01@gmail.com>
+# These packages are data only and do not contain machine code.
+
+_enable_packages3D=yes
+_enable_templates=yes
+
+#_generator="Unix Makefiles"
+_generator="Ninja"
+
+_basename=kicad
+_basepkgver=7.0
+_basepkgname=${_basename}${_basepkgver}
+_sharefoldername=${_basename}${_basepkgver}
+pkgbase=${_basepkgname}-library-git
+pkgname=(
+  "${_basepkgname}-footprints-git"
+  "${_basepkgname}-symbols-git"
+  $( [[ ${_enable_templates} == "yes" ]] && echo "${_basepkgname}-templates-git")
+  $( [[ ${_enable_packages3D} == "yes" ]] && echo "${_basepkgname}-packages3D-git")
+)
+pkgdesc="Default description for libraries needed by mingw-w64 kicad application"
+url="https://www.kicad.org/libraries/"
+license=("Creative Commons CC-BY-SA 4.0 License")
+arch=(any)
+groups=("eda")
+options=('!strip') # These packages are data only and do not contain machine code.
+depends=()
+makedepends=('git' 'cmake' 
+  $([[ "$_generator" == "Ninja" ]] && echo "ninja")
+  $([[ "$_generator" != "Ninja" ]] && echo "make")
+)
+pkgver=${_basepkgver}.8
+pkgrel=1
+source=(
+  kicad-symbols-git::"git+https://gitlab.com/kicad/libraries/kicad-symbols.git#tag=$pkgver"
+  kicad-footprints-git::"git+https://gitlab.com/kicad/libraries/kicad-footprints.git#tag=$pkgver"
+)
+sha256sums=('SKIP' 'SKIP')
+if [[ ${_enable_templates} == "yes" ]]; then
+  source+=(kicad-templates-git::"git+https://gitlab.com/kicad/libraries/kicad-templates.git#tag=$pkgver")
+  sha256sums+=('SKIP')
+fi
+if [[ ${_enable_packages3D} == "yes" ]]; then
+  source+=(kicad-packages3D-git::"git+https://gitlab.com/kicad/libraries/kicad-packages3D.git#tag=$pkgver")
+  sha256sums+=('SKIP')
+fi
+
+_build_cmake()
+{
+  msg2 "Build kicad-$1"
+  [[ -d "${srcdir}"/build-$1 ]] && rm -rf "${srcdir}"/build-$1
+  mkdir -p "${srcdir}/build-$1" && cd "${srcdir}/build-$1"
+
+  cmake.exe \
+    -G"$_generator" \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    ../${_basename}-$1-git
+
+  cmake.exe --build .
+}
+
+build() {
+  _build_cmake "footprints"
+  _build_cmake "symbols"
+  if [[ ${_enable_templates} == "yes" ]]; then
+    _build_cmake "templates"
+  fi
+  if [[ ${_enable_packages3D} == "yes" ]]; then
+    _build_cmake "packages3D"
+  fi
+}
+
+package_footprints-git() {
+  pkgdesc="KiCad footprints library"
+  conflicts=(${_basename}-footprints)
+  provides=(${_basename}-footprints)
+  depends=()
+  optdepends=("${_basename}")
+
+  cd "${srcdir}/build-footprints"
+
+  echo "pkgdir := ${pkgdir}"
+
+  DESTDIR="${pkgdir}" cmake.exe --install .
+  cd "${pkgdir}/usr/share" && mv kicad ${_sharefoldername}
+}
+
+package_symbols-git() {
+  pkgdesc="KiCad symbols library"
+  conflicts=(${_basename}-symbols)
+  provides=(${_basename}-symbols)
+  depends=()
+  optdepends=("${_basename}")
+
+  cd "${srcdir}/build-symbols"
+
+  DESTDIR="${pkgdir}" cmake.exe --install .
+  cd "${pkgdir}/usr/share" && mv kicad ${_sharefoldername}
+}
+
+package_templates-git() {
+  pkgdesc="KiCad templates library"
+  conflicts=(${_basename}-templates)
+  provides=(${_basename}-templates)
+
+  cd "${srcdir}/build-templates"
+
+  DESTDIR="${pkgdir}" cmake.exe --install .
+  cd "${pkgdir}/usr/share" && mv kicad ${_sharefoldername}
+}
+
+package_packages3D-git() {
+  pkgdesc="KiCad 3D models library"
+  conflicts=(${_basename}-packages3D)
+  provides=(${_basename}-packages3D)
+
+  cd "${srcdir}/build-packages3D"
+
+  DESTDIR="${pkgdir}" cmake.exe --install .
+  cd "${pkgdir}/usr/share" && mv kicad ${_sharefoldername}
+}
+
+# vim: set ft=bash :
+
+# generate wrappers
+for _name in "${pkgname[@]}"; do
+  _short="package_${_name#${_basepkgname}-}"
+  _func="$(declare -f "${_short}")"
+  eval "${_func/#${_short}/package_${_name}}"
+done
+# template end;
