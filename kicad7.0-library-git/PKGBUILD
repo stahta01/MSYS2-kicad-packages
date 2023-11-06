@@ -29,7 +29,7 @@ makedepends=('git' 'cmake'
   $([[ "$_generator" == "Ninja" ]] && echo "ninja")
   $([[ "$_generator" != "Ninja" ]] && echo "make")
 )
-pkgver=${_basepkgver}.8
+pkgver=${_basepkgver}.9
 pkgrel=1
 source=(
   kicad-symbols-git::"git+https://gitlab.com/kicad/libraries/kicad-symbols.git#tag=$pkgver"
@@ -72,8 +72,8 @@ build() {
 
 package_footprints-git() {
   pkgdesc="KiCad footprints library"
-  conflicts=(${_basename}-footprints)
-  provides=(${_basename}-footprints)
+  conflicts=(${_basepkgname}-footprints)
+  provides=(${_basepkgname}-footprints)
   depends=()
   optdepends=("${_basename}")
 
@@ -87,8 +87,8 @@ package_footprints-git() {
 
 package_symbols-git() {
   pkgdesc="KiCad symbols library"
-  conflicts=(${_basename}-symbols)
-  provides=(${_basename}-symbols)
+  conflicts=(${_basepkgname}-symbols)
+  provides=(${_basepkgname}-symbols)
   depends=()
   optdepends=("${_basename}")
 
@@ -100,8 +100,8 @@ package_symbols-git() {
 
 package_templates-git() {
   pkgdesc="KiCad templates library"
-  conflicts=(${_basename}-templates)
-  provides=(${_basename}-templates)
+  conflicts=(${_basepkgname}-templates)
+  provides=(${_basepkgname}-templates)
 
   cd "${srcdir}/build-templates"
 
@@ -111,8 +111,8 @@ package_templates-git() {
 
 package_packages3D-git() {
   pkgdesc="KiCad 3D models library"
-  conflicts=(${_basename}-packages3D)
-  provides=(${_basename}-packages3D)
+  conflicts=(${_basepkgname}-packages3D)
+  provides=(${_basepkgname}-packages3D)
 
   cd "${srcdir}/build-packages3D"
 
